@@ -2867,7 +2867,8 @@ class basic_json
         /*!
         @brief create a string from a Unicode code point
 
-        @param codepoint  the code point (must be in [0x0, 0x10ffff]
+        @param codepoint1  the code point (can be high surrogate)
+        @param codepoint2  the code point (can be low surrogate or 0)
         @return string representation of the code point
         @exception std::out_of_range if code point is >0x10ffff
         @exception std::invalid_argument if the low surrogate is invalid
