@@ -175,6 +175,7 @@ class basic_json
     */
     friend bool operator<(const value_t lhs, const value_t rhs)
     {
+        // no type is smaller than itself
         if (lhs == rhs)
         {
             return false;
@@ -184,11 +185,13 @@ class basic_json
         {
             case (value_t::null):
             {
+                // nulls are smaller than all other types
                 return true;
             }
 
             case (value_t::boolean):
             {
+                // only nulls are smaller than booleans
                 return (rhs != value_t::null);
             }
 
@@ -197,16 +200,16 @@ class basic_json
             {
                 switch (rhs)
                 {
-                    case (value_t::null):
-                    case (value_t::boolean):
-                    case (value_t::number_float):
-                    case (value_t::number_integer):
+                    // numbers are smaller than objects, arrays, and string
+                    case (value_t::object):
+                    case (value_t::array):
+                    case (value_t::string):
                     {
-                        return false;
+                        return true;
                     }
                     default:
                     {
-                        return true;
+                        return false;
                     }
                 }
             }
@@ -215,27 +218,28 @@ class basic_json
             {
                 switch (rhs)
                 {
-                    case (value_t::null):
-                    case (value_t::boolean):
-                    case (value_t::number_float):
-                    case (value_t::number_integer):
+                    // objects are smaller than arrays and string
+                    case (value_t::array):
+                    case (value_t::string):
                     {
-                        return false;
+                        return true;
                     }
                     default:
                     {
-                        return true;
+                        return false;
                     }
                 }
             }
 
             case (value_t::array):
             {
+                // arrays are smaller than strings
                 return (rhs == value_t::string);
             }
 
             default:
             {
+                // a string is not smaller than any other types
                 return false;
             }
         }
@@ -1835,7 +1839,7 @@ class basic_json
     };
 
   public:
-    /// a bidirectional iterator for the basic_json class
+    /// a random access iterator for the basic_json class
     class iterator : public std::iterator<std::random_access_iterator_tag, basic_json>
     {
       public:
@@ -2157,18 +2161,17 @@ class basic_json
         /// comparison: smaller
         inline bool operator<(const iterator& other) const
         {
-            if (m_object != other.m_object or m_object->m_type != other.m_object->m_type)
+            // if types are different, use them to compare iterators
+            if (m_object->m_type != other.m_object->m_type)
             {
-                // TODO: check this
-                return false;
+                return (m_object->m_type < other.m_object->m_type);
             }
 
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
                 {
-                    return false;
-                    // TODO return (m_it.object_iterator < other.m_it.object_iterator);
+                    throw std::domain_error("cannot use operator< for object iterators");
                 }
 
                 case (basic_json::value_t::array):
@@ -2208,8 +2211,7 @@ class basic_json
             {
                 case (basic_json::value_t::object):
                 {
-                    //TODO m_it.object_iterator += i;
-                    break;
+                    throw std::domain_error("cannot use operator+= for object iterators");
                 }
 
                 case (basic_json::value_t::array):
@@ -2257,7 +2259,7 @@ class basic_json
             {
                 case (basic_json::value_t::object):
                 {
-                    //TODO return m_it.object_iterator - other.m_it.object_iterator;
+                    throw std::domain_error("cannot use operator- for object iterators");
                     return 0;
                 }
 
@@ -2280,8 +2282,7 @@ class basic_json
             {
                 case (basic_json::value_t::object):
                 {
-                    // TODO
-                    return m_it.object_iterator->second;
+                    throw std::domain_error("cannot use operator[] for object iterators");
                 }
 
                 case (basic_json::value_t::array):
@@ -2315,7 +2316,7 @@ class basic_json
         internal_iterator<typename array_t::iterator, typename object_t::iterator> m_it;
     };
 
-    /// a const bidirectional iterator for the basic_json class
+    /// a const random access iterator for the basic_json class
     class const_iterator : public std::iterator<std::random_access_iterator_tag, const basic_json>
     {
       public:
@@ -2657,17 +2658,17 @@ class basic_json
         /// comparison: smaller
         inline bool operator<(const const_iterator& other) const
         {
-            if (m_object != other.m_object or m_object->m_type != other.m_object->m_type)
+            // if types are different, use them to compare iterators
+            if (m_object->m_type != other.m_object->m_type)
             {
-                // TODO: check this
-                return false;
+                return (m_object->m_type < other.m_object->m_type);
             }
 
             switch (m_object->m_type)
             {
                 case (basic_json::value_t::object):
                 {
-                    return (m_it.object_iterator < other.m_it.object_iterator);
+                    throw std::domain_error("cannot use operator< for object iterators");
                 }
 
                 case (basic_json::value_t::array):
@@ -2707,7 +2708,7 @@ class basic_json
             {
                 case (basic_json::value_t::object):
                 {
-                    //TODO m_it.object_iterator += i;
+                    throw std::domain_error("cannot use operator+= for object iterators");
                     break;
                 }
 
@@ -2756,8 +2757,7 @@ class basic_json
             {
                 case (basic_json::value_t::object):
                 {
-                    // TODO return m_it.object_iterator - other.m_it.object_iterator;
-                    return 0;
+                    throw std::domain_error("cannot use operator- for object iterators");
                 }
 
                 case (basic_json::value_t::array):
@@ -2779,8 +2779,7 @@ class basic_json
             {
                 case (basic_json::value_t::object):
                 {
-                    // TODO
-                    return m_it.object_iterator->second;
+                    throw std::domain_error("cannot use operator[] for object iterators");
                 }
 
                 case (basic_json::value_t::array):
