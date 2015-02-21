@@ -2128,9 +2128,10 @@ class basic_json
         /// comparison: equal
         inline bool operator==(const iterator& other) const
         {
-            if (m_object != other.m_object or m_object->m_type != other.m_object->m_type)
+            // if objects are not the same, the comparison is undefined
+            if (m_object != other.m_object)
             {
-                return false;
+                throw std::domain_error("cannot compare iterators of different containers");
             }
 
             switch (m_object->m_type)
@@ -2161,10 +2162,10 @@ class basic_json
         /// comparison: smaller
         inline bool operator<(const iterator& other) const
         {
-            // if types are different, use them to compare iterators
-            if (m_object->m_type != other.m_object->m_type)
+            // if objects are not the same, the comparison is undefined
+            if (m_object != other.m_object)
             {
-                return (m_object->m_type < other.m_object->m_type);
+                throw std::domain_error("cannot compare iterators of different containers");
             }
 
             switch (m_object->m_type)
@@ -2625,9 +2626,10 @@ class basic_json
         /// comparison: equal
         inline bool operator==(const const_iterator& other) const
         {
-            if (m_object != other.m_object or m_object->m_type != other.m_object->m_type)
+            // if objects are not the same, the comparison is undefined
+            if (m_object != other.m_object)
             {
-                return false;
+                throw std::domain_error("cannot compare iterators of different containers");
             }
 
             switch (m_object->m_type)
@@ -2658,10 +2660,10 @@ class basic_json
         /// comparison: smaller
         inline bool operator<(const const_iterator& other) const
         {
-            // if types are different, use them to compare iterators
-            if (m_object->m_type != other.m_object->m_type)
+            // if objects are not the same, the comparison is undefined
+            if (m_object != other.m_object)
             {
-                return (m_object->m_type < other.m_object->m_type);
+                throw std::domain_error("cannot compare iterators of different containers");
             }
 
             switch (m_object->m_type)
