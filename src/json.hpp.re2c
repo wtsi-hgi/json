@@ -166,6 +166,80 @@ class basic_json
         number_float    ///< number value (floating-point)
     };
 
+    /*!
+    @brief comparison operator for JSON value types
+
+    Returns an ordering that is similar to Python:
+    - order: null < boolean < number < object < array < string
+    - furthermore, each type is not smaller than itself
+    */
+    friend bool operator<(const value_t lhs, const value_t rhs)
+    {
+        if (lhs == rhs)
+        {
+            return false;
+        }
+
+        switch (lhs)
+        {
+            case (value_t::null):
+            {
+                return true;
+            }
+
+            case (value_t::boolean):
+            {
+                return (rhs != value_t::null);
+            }
+
+            case (value_t::number_float):
+            case (value_t::number_integer):
+            {
+                switch (rhs)
+                {
+                    case (value_t::null):
+                    case (value_t::boolean):
+                    case (value_t::number_float):
+                    case (value_t::number_integer):
+                    {
+                        return false;
+                    }
+                    default:
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            case (value_t::object):
+            {
+                switch (rhs)
+                {
+                    case (value_t::null):
+                    case (value_t::boolean):
+                    case (value_t::number_float):
+                    case (value_t::number_integer):
+                    {
+                        return false;
+                    }
+                    default:
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            case (value_t::array):
+            {
+                return (rhs == value_t::string);
+            }
+
+            default:
+            {
+                return false;
+            }
+        }
+    }
 
     //////////////////
     // constructors //
@@ -1393,7 +1467,9 @@ class basic_json
             }
         }
 
-        return false;
+        // We only reach this line if we cannot compare values. In that case,
+        // we compare types.
+        return lhs.type() < rhs.type();
     }
 
     /// comparison: less than or equal
@@ -1756,12 +1832,6 @@ class basic_json
 
         /// default constructor
         internal_iterator() : generic_iterator(-1) {}
-        /// constructor for object iterators
-        internal_iterator(object_iterator_t v) : object_iterator(v) {}
-        /// constructor for array iterators
-        internal_iterator(array_iterator_t v) : array_iterator(v) {}
-        /// constructor for generic iterators
-        internal_iterator(int v) : generic_iterator(v) {}
     };
 
   public:

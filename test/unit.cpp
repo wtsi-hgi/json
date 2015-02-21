@@ -4356,121 +4356,165 @@ TEST_CASE("modifiers")
 
 TEST_CASE("lexicographical comparison operators")
 {
-    json j_values =
+    SECTION("types")
     {
-        nullptr, nullptr,
-        17, 42,
-        3.14159, 23.42,
-        "foo", "bar",
-        true, false,
-        {1, 2, 3}, {"one", "two", "three"},
-        {{"first", 1}, {"second", 2}}, {{"a", "A"}, {"b", {"B"}}}
-    };
-
-    SECTION("comparison: equal")
-    {
-        std::vector<std::vector<bool>> expected =
+        std::vector<json::value_t> j_types =
         {
-            {true, true, false, false, false, false, false, false, false, false, false, false, false, false},
-            {true, true, false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, true, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, true, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, true, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, true, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, true, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, true, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, true, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, true, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, true, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, true, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false, true, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false, false, true}
+            json::value_t::null,
+            json::value_t::boolean,
+            json::value_t::number_integer,
+            json::value_t::number_float,
+            json::value_t::object,
+            json::value_t::array,
+            json::value_t::string
         };
 
-        for (size_t i = 0; i < j_values.size(); ++i)
+        SECTION("comparison: less")
         {
-            for (size_t j = 0; j < j_values.size(); ++j)
+            std::vector<std::vector<bool>> expected =
             {
-                // check precomputed values
-                CHECK( (j_values[i] == j_values[j]) == expected[i][j] );
+                {false, true, true, true, true, true, true},
+                {false, false, true, true, true, true, true},
+                {false, false, false, false, true, true, true},
+                {false, false, false, false, true, true, true},
+                {false, false, false, false, false, true, true},
+                {false, false, false, false, false, false, true},
+                {false, false, false, false, false, false, false}
+            };
+
+            for (size_t i = 0; i < j_types.size(); ++i)
+            {
+                for (size_t j = 0; j < j_types.size(); ++j)
+                {
+                    CAPTURE(i);
+                    CAPTURE(j);
+                    // check precomputed values
+                    CHECK( (j_types[i] < j_types[j]) == expected[i][j] );
+                }
             }
         }
     }
 
-    SECTION("comparison: not equal")
+    SECTION("values")
     {
-        for (size_t i = 0; i < j_values.size(); ++i)
+        json j_values =
         {
-            for (size_t j = 0; j < j_values.size(); ++j)
-            {
-                // check definition
-                CHECK( (j_values[i] != j_values[j]) == not(j_values[i] == j_values[j]) );
-            }
-        }
-    }
-
-    SECTION("comparison: less")
-    {
-        std::vector<std::vector<bool>> expected =
-        {
-            {false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, true, false, true, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, true, true, false, true, false, false, false, false, false, false, false, false},
-            {false, false, false, true, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, true, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, true, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false, false, false},
-            {false, false, false, false, false, false, false, false, false, false, false, false, true, false}
+            nullptr, nullptr,
+            17, 42,
+            3.14159, 23.42,
+            "foo", "bar",
+            true, false,
+            {1, 2, 3}, {"one", "two", "three"},
+            {{"first", 1}, {"second", 2}}, {{"a", "A"}, {"b", {"B"}}}
         };
 
-        for (size_t i = 0; i < j_values.size(); ++i)
+        SECTION("comparison: equal")
         {
-            for (size_t j = 0; j < j_values.size(); ++j)
+            std::vector<std::vector<bool>> expected =
             {
-                // check precomputed values
-                CHECK( (j_values[i] < j_values[j]) == expected[i][j] );
+                {true, true, false, false, false, false, false, false, false, false, false, false, false, false},
+                {true, true, false, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, true, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, true, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, true, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, true, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, true, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, true, false, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, true, false, false, false, false, false},
+                {false, false, false, false, false, false, false, false, false, true, false, false, false, false},
+                {false, false, false, false, false, false, false, false, false, false, true, false, false, false},
+                {false, false, false, false, false, false, false, false, false, false, false, true, false, false},
+                {false, false, false, false, false, false, false, false, false, false, false, false, true, false},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, true}
+            };
+
+            for (size_t i = 0; i < j_values.size(); ++i)
+            {
+                for (size_t j = 0; j < j_values.size(); ++j)
+                {
+                    // check precomputed values
+                    CHECK( (j_values[i] == j_values[j]) == expected[i][j] );
+                }
             }
         }
-    }
 
-    SECTION("comparison: less than or equal equal")
-    {
-        for (size_t i = 0; i < j_values.size(); ++i)
+        SECTION("comparison: not equal")
         {
-            for (size_t j = 0; j < j_values.size(); ++j)
+            for (size_t i = 0; i < j_values.size(); ++i)
             {
-                // check definition
-                CHECK( (j_values[i] <= j_values[j]) == not(j_values[j] < j_values[i]) );
+                for (size_t j = 0; j < j_values.size(); ++j)
+                {
+                    // check definition
+                    CHECK( (j_values[i] != j_values[j]) == not(j_values[i] == j_values[j]) );
+                }
             }
         }
-    }
 
-    SECTION("comparison: greater than")
-    {
-        for (size_t i = 0; i < j_values.size(); ++i)
+        SECTION("comparison: less")
         {
-            for (size_t j = 0; j < j_values.size(); ++j)
+            std::vector<std::vector<bool>> expected =
             {
-                // check definition
-                CHECK( (j_values[i] > j_values[j]) == (j_values[j] < j_values[i]) );
+                {false, false, true, true, true, true, true, true, true, true, true, true, true, true},
+                {false, false, true, true, true, true, true, true, true, true, true, true, true, true},
+                {false, false, false, true, false, true, true, true, false, false, true, true, true, true},
+                {false, false, false, false, false, false, true, true, false, false, true, true, true, true},
+                {false, false, true, true, false, true, true, true, false, false, true, true, true, true},
+                {false, false, false, true, false, false, true, true, false, false, true, true, true, true},
+                {false, false, false, false, false, false, false, false, false, false, false, false, false, false},
+                {false, false, false, false, false, false, true, false, false, false, false, false, false, false},
+                {false, false, true, true, true, true, true, true, false, false, true, true, true, true},
+                {false, false, true, true, true, true, true, true, true, false, true, true, true, true},
+                {false, false, false, false, false, false, true, true, false, false, false, true, false, false},
+                {false, false, false, false, false, false, true, true, false, false, false, false, false, false},
+                {false, false, false, false, false, false, true, true, false, false, true, true, false, false},
+                {false, false, false, false, false, false, true, true, false, false, true, true, true, false}
+            };
+
+            for (size_t i = 0; i < j_values.size(); ++i)
+            {
+                for (size_t j = 0; j < j_values.size(); ++j)
+                {
+                    CAPTURE(i);
+                    CAPTURE(j);
+                    // check precomputed values
+                    CHECK( (j_values[i] < j_values[j]) == expected[i][j] );
+                }
             }
         }
-    }
 
-    SECTION("comparison: greater than or equal")
-    {
-        for (size_t i = 0; i < j_values.size(); ++i)
+        SECTION("comparison: less than or equal equal")
         {
-            for (size_t j = 0; j < j_values.size(); ++j)
+            for (size_t i = 0; i < j_values.size(); ++i)
             {
-                // check definition
-                CHECK( (j_values[i] >= j_values[j]) == not(j_values[i] < j_values[j]) );
+                for (size_t j = 0; j < j_values.size(); ++j)
+                {
+                    // check definition
+                    CHECK( (j_values[i] <= j_values[j]) == not(j_values[j] < j_values[i]) );
+                }
+            }
+        }
+
+        SECTION("comparison: greater than")
+        {
+            for (size_t i = 0; i < j_values.size(); ++i)
+            {
+                for (size_t j = 0; j < j_values.size(); ++j)
+                {
+                    // check definition
+                    CHECK( (j_values[i] > j_values[j]) == (j_values[j] < j_values[i]) );
+                }
+            }
+        }
+
+        SECTION("comparison: greater than or equal")
+        {
+            for (size_t i = 0; i < j_values.size(); ++i)
+            {
+                for (size_t j = 0; j < j_values.size(); ++j)
+                {
+                    // check definition
+                    CHECK( (j_values[i] >= j_values[j]) == not(j_values[i] < j_values[j]) );
+                }
             }
         }
     }
@@ -6136,9 +6180,10 @@ TEST_CASE("README", "[hide]")
     }
 }
 
+/*
 TEST_CASE()
 {
-    json j = {13, 29, 3, {{"one", 1}, {"two", 2}}, false};
+    json j = {13, 29, 3, {{"one", 1}, {"two", 2}}, true, false, {1, 2, 3}, "foo", "baz"};
     {
         json::iterator it = j.begin();
         it += 0;
@@ -6150,6 +6195,7 @@ TEST_CASE()
     }
     {
         std::sort(j.begin(), j.end());
-        CHECK(j == json({3, 13, 29, {{"one", 1}, {"two", 2}}, false}));
+        CHECK(j == json({false, true, 3, 13, 29, {{"one", 1}, {"two", 2}}, {1, 2, 3}, "baz", "foo"}));
     }
 }
+*/
