@@ -3795,6 +3795,73 @@ TEST_CASE("iterators")
                 }
             }
         }
+
+        SECTION("subscript operator")
+        {
+            SECTION("object")
+            {
+                {
+                    auto it = j_object.begin();
+                    CHECK_THROWS_AS(it[0], std::domain_error);
+                    CHECK_THROWS_AS(it[1], std::domain_error);
+                }
+                {
+                    auto it = j_object.cbegin();
+                    CHECK_THROWS_AS(it[0], std::domain_error);
+                    CHECK_THROWS_AS(it[1], std::domain_error);
+                }
+            }
+
+            SECTION("array")
+            {
+                {
+                    auto it = j_array.begin();
+                    CHECK(it[0] == json(1));
+                    CHECK(it[1] == json(2));
+                    CHECK(it[2] == json(3));
+                    CHECK(it[3] == json(4));
+                    CHECK(it[4] == json(5));
+                    CHECK(it[5] == json(6));
+                }
+                {
+                    auto it = j_array.cbegin();
+                    CHECK(it[0] == json(1));
+                    CHECK(it[1] == json(2));
+                    CHECK(it[2] == json(3));
+                    CHECK(it[3] == json(4));
+                    CHECK(it[4] == json(5));
+                    CHECK(it[5] == json(6));
+                }
+            }
+
+            SECTION("null")
+            {
+                {
+                    auto it = j_null.begin();
+                    CHECK_THROWS_AS(it[0], std::out_of_range);
+                    CHECK_THROWS_AS(it[1], std::out_of_range);
+                }
+                {
+                    auto it = j_null.cbegin();
+                    CHECK_THROWS_AS(it[0], std::out_of_range);
+                    CHECK_THROWS_AS(it[1], std::out_of_range);
+                }
+            }
+
+            SECTION("value")
+            {
+                {
+                    auto it = j_value.begin();
+                    CHECK(it[0] == json(42));
+                    CHECK_THROWS_AS(it[1], std::out_of_range);
+                }
+                {
+                    auto it = j_value.cbegin();
+                    CHECK(it[0] == json(42));
+                    CHECK_THROWS_AS(it[1], std::out_of_range);
+                }
+            }
+        }
     }
 }
 
