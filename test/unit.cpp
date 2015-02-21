@@ -2366,7 +2366,7 @@ TEST_CASE("element access")
 
 TEST_CASE("iterators")
 {
-    SECTION("bidirectional iterator")
+    SECTION("basic behavior")
     {
         SECTION("uninitialized")
         {
@@ -3501,7 +3501,7 @@ TEST_CASE("iterators")
         }
     }
 
-    SECTION("iteratror comparisons")
+    SECTION("iterator comparisons")
     {
         json j_values = {nullptr, true, 42, 23.23, {{"one", 1}, {"two", 2}}, {1, 2, 3, 4, 5}, "Hello, world"};
 
@@ -3665,6 +3665,133 @@ TEST_CASE("iterators")
 
                     CHECK_THROWS_AS(j.begin() < k.begin(), std::domain_error);
                     CHECK_THROWS_AS(j.cbegin() < k.cbegin(), std::domain_error);
+                }
+            }
+        }
+    }
+
+    SECTION("iterator arithmetic")
+    {
+        json j_object = {{"one", 1}, {"two", 2}, {"three", 3}};
+        json j_array = {1, 2, 3, 4, 5, 6};
+        json j_null = nullptr;
+        json j_value = 42;
+
+        SECTION("addition and subtraction")
+        {
+            SECTION("object")
+            {
+                {
+                    auto it = j_object.begin();
+                    CHECK_THROWS_AS(it += 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.cbegin();
+                    CHECK_THROWS_AS(it += 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.begin();
+                    CHECK_THROWS_AS(it + 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.cbegin();
+                    CHECK_THROWS_AS(it + 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.begin();
+                    CHECK_THROWS_AS(it -= 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.cbegin();
+                    CHECK_THROWS_AS(it -= 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.begin();
+                    CHECK_THROWS_AS(it - 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.cbegin();
+                    CHECK_THROWS_AS(it - 1, std::domain_error);
+                }
+                {
+                    auto it = j_object.begin();
+                    CHECK_THROWS_AS(it - it, std::domain_error);
+                }
+                {
+                    auto it = j_object.cbegin();
+                    CHECK_THROWS_AS(it - it, std::domain_error);
+                }
+            }
+
+            SECTION("array")
+            {
+                {
+                    auto it = j_array.begin();
+                    it += 3;
+                    CHECK((j_array.begin() + 3) == it);
+                    CHECK((it - 3) == j_array.begin());
+                    CHECK((it - j_array.begin()) == 3);
+                    CHECK(*it == json(4));
+                    it -= 2;
+                    CHECK(*it == json(2));
+                }
+                {
+                    auto it = j_array.cbegin();
+                    it += 3;
+                    CHECK((j_array.cbegin() + 3) == it);
+                    CHECK((it - 3) == j_array.cbegin());
+                    CHECK((it - j_array.cbegin()) == 3);
+                    CHECK(*it == json(4));
+                    it -= 2;
+                    CHECK(*it == json(2));
+                }
+            }
+
+            SECTION("null")
+            {
+                {
+                    auto it = j_null.begin();
+                    it += 3;
+                    CHECK((j_null.begin() + 3) == it);
+                    CHECK((it - 3) == j_null.begin());
+                    CHECK((it - j_null.begin()) == 3);
+                    CHECK(it != j_null.end());
+                    it -= 3;
+                    CHECK(it == j_null.end());
+                }
+                {
+                    auto it = j_null.cbegin();
+                    it += 3;
+                    CHECK((j_null.cbegin() + 3) == it);
+                    CHECK((it - 3) == j_null.cbegin());
+                    CHECK((it - j_null.cbegin()) == 3);
+                    CHECK(it != j_null.cend());
+                    it -= 3;
+                    CHECK(it == j_null.cend());
+                }
+            }
+
+            SECTION("value")
+            {
+                {
+                    auto it = j_value.begin();
+                    it += 3;
+                    CHECK((j_value.begin() + 3) == it);
+                    CHECK((it - 3) == j_value.begin());
+                    CHECK((it - j_value.begin()) == 3);
+                    CHECK(it != j_value.end());
+                    it -= 3;
+                    CHECK(*it == json(42));
+                }
+                {
+                    auto it = j_value.cbegin();
+                    it += 3;
+                    CHECK((j_value.cbegin() + 3) == it);
+                    CHECK((it - 3) == j_value.cbegin());
+                    CHECK((it - j_value.cbegin()) == 3);
+                    CHECK(it != j_value.cend());
+                    it -= 3;
+                    CHECK(*it == json(42));
                 }
             }
         }
@@ -5129,77 +5256,6 @@ TEST_CASE("iterator class")
             }
         }
     }
-
-    /*
-    SECTION("comparison")
-    {
-        json j_values =
-        {
-            nullptr, nullptr,
-            17, 42,
-            3.14159, 23.42,
-            "foo", "bar",
-            true, false,
-            {1, 2, 3}, {"one", "two", "three"},
-            {{"first", 1}, {"second", 2}}, {{"a", "A"}, {"b", {"B"}}}
-        };
-
-        SECTION("comparison: equal")
-        {
-            std::vector<std::vector<bool>> expected =
-            {
-                {true, false, false, false, false, false, false, false, false, false, false, false, false, false},
-                {false, true, false, false, false, false, false, false, false, false, false, false, false, false},
-                {false, false, true, false, false, false, false, false, false, false, false, false, false, false},
-                {false, false, false, true, false, false, false, false, false, false, false, false, false, false},
-                {false, false, false, false, true, false, false, false, false, false, false, false, false, false},
-                {false, false, false, false, false, true, false, false, false, false, false, false, false, false},
-                {false, false, false, false, false, false, true, false, false, false, false, false, false, false},
-                {false, false, false, false, false, false, false, true, false, false, false, false, false, false},
-                {false, false, false, false, false, false, false, false, true, false, false, false, false, false},
-                {false, false, false, false, false, false, false, false, false, true, false, false, false, false},
-                {false, false, false, false, false, false, false, false, false, false, true, false, false, false},
-                {false, false, false, false, false, false, false, false, false, false, false, true, false, false},
-                {false, false, false, false, false, false, false, false, false, false, false, false, true, false},
-                {false, false, false, false, false, false, false, false, false, false, false, false, false, true}
-            };
-
-            for (size_t i = 0; i < j_values.size(); ++i)
-            {
-                for (size_t j = 0; j < j_values.size(); ++j)
-                {
-                    CAPTURE(i);
-                    CAPTURE(j);
-                    if (i != j)
-                    {
-                        CHECK_THROWS_AS(j_values[i].cbegin() == j_values[j].cbegin(), std::domain_error);
-                    }
-                    else
-                    {
-                        // check precomputed values
-                        CHECK( (j_values[i].begin() == j_values[j].begin()) == expected[i][j] );
-                    }
-                }
-            }
-        }
-
-        SECTION("comparison: not equal")
-        {
-            for (size_t i = 0; i < j_values.size(); ++i)
-            {
-                for (size_t j = 0; j < j_values.size(); ++j)
-                {
-                    if (i == j)
-                    {
-                        // check definition
-                        CHECK( (j_values[i].begin() != j_values[j].begin()) == not ((j_values[i].begin() ==
-                                j_values[j].begin())) );
-                    }
-                }
-            }
-        }
-    }
-    */
 }
 
 TEST_CASE("const_iterator class")
@@ -5564,77 +5620,6 @@ TEST_CASE("const_iterator class")
             }
         }
     }
-
-    /*
-    SECTION("comparison")
-    {
-        json j_values =
-        {
-            nullptr, nullptr,
-            17, 42,
-            3.14159, 23.42,
-            "foo", "bar",
-            true, false,
-            {1, 2, 3}, {"one", "two", "three"},
-            {{"first", 1}, {"second", 2}}, {{"a", "A"}, {"b", {"B"}}}
-        };
-
-        SECTION("comparison: equal")
-        {
-            std::vector<std::vector<bool>> expected =
-            {
-                {true, false, false, false, false, false, false, false, false, false, false, false, false, false},
-                {false, true, false, false, false, false, false, false, false, false, false, false, false, false},
-                {false, false, true, false, false, false, false, false, false, false, false, false, false, false},
-                {false, false, false, true, false, false, false, false, false, false, false, false, false, false},
-                {false, false, false, false, true, false, false, false, false, false, false, false, false, false},
-                {false, false, false, false, false, true, false, false, false, false, false, false, false, false},
-                {false, false, false, false, false, false, true, false, false, false, false, false, false, false},
-                {false, false, false, false, false, false, false, true, false, false, false, false, false, false},
-                {false, false, false, false, false, false, false, false, true, false, false, false, false, false},
-                {false, false, false, false, false, false, false, false, false, true, false, false, false, false},
-                {false, false, false, false, false, false, false, false, false, false, true, false, false, false},
-                {false, false, false, false, false, false, false, false, false, false, false, true, false, false},
-                {false, false, false, false, false, false, false, false, false, false, false, false, true, false},
-                {false, false, false, false, false, false, false, false, false, false, false, false, false, true}
-            };
-
-            for (size_t i = 0; i < j_values.size(); ++i)
-            {
-                for (size_t j = 0; j < j_values.size(); ++j)
-                {
-                    CAPTURE(i);
-                    CAPTURE(j);
-                    if (i != j)
-                    {
-                        CHECK_THROWS_AS(j_values[i].cbegin() == j_values[j].cbegin(), std::domain_error);
-                    }
-                    else
-                    {
-                        // check precomputed values
-                        CHECK( (j_values[i].cbegin() == j_values[j].cbegin()) == expected[i][j] );
-                    }
-                }
-            }
-        }
-
-        SECTION("comparison: not equal")
-        {
-            for (size_t i = 0; i < j_values.size(); ++i)
-            {
-                for (size_t j = 0; j < j_values.size(); ++j)
-                {
-                    if (i == j)
-                    {
-                        // check definition
-                        CHECK( (j_values[i].cbegin() != j_values[j].cbegin()) == not ((j_values[i].cbegin() ==
-                                j_values[j].cbegin())) );
-                    }
-                }
-            }
-        }
-    }
-    */
 }
 
 TEST_CASE("convenience functions")
