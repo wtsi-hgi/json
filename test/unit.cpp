@@ -1050,6 +1050,86 @@ TEST_CASE("other constructors and destructor")
 
 TEST_CASE("object inspection")
 {
+    SECTION("convenience type checker")
+    {
+        SECTION("object")
+        {
+            json j {{"foo", 1}, {"bar", false}};
+            CHECK(not j.is_null());
+            CHECK(not j.is_boolean());
+            CHECK(not j.is_number());
+            CHECK(j.is_object());
+            CHECK(not j.is_array());
+            CHECK(not j.is_string());
+        }
+
+        SECTION("array")
+        {
+            json j {"foo", 1, 42.23, false};
+            CHECK(not j.is_null());
+            CHECK(not j.is_boolean());
+            CHECK(not j.is_number());
+            CHECK(not j.is_object());
+            CHECK(j.is_array());
+            CHECK(not j.is_string());
+        }
+
+        SECTION("null")
+        {
+            json j(nullptr);
+            CHECK(j.is_null());
+            CHECK(not j.is_boolean());
+            CHECK(not j.is_number());
+            CHECK(not j.is_object());
+            CHECK(not j.is_array());
+            CHECK(not j.is_string());
+        }
+
+        SECTION("boolean")
+        {
+            json j(true);
+            CHECK(not j.is_null());
+            CHECK(j.is_boolean());
+            CHECK(not j.is_number());
+            CHECK(not j.is_object());
+            CHECK(not j.is_array());
+            CHECK(not j.is_string());
+        }
+
+        SECTION("string")
+        {
+            json j("Hello world");
+            CHECK(not j.is_null());
+            CHECK(not j.is_boolean());
+            CHECK(not j.is_number());
+            CHECK(not j.is_object());
+            CHECK(not j.is_array());
+            CHECK(j.is_string());
+        }
+
+        SECTION("number (integer)")
+        {
+            json j(42);
+            CHECK(not j.is_null());
+            CHECK(not j.is_boolean());
+            CHECK(j.is_number());
+            CHECK(not j.is_object());
+            CHECK(not j.is_array());
+            CHECK(not j.is_string());
+        }
+
+        SECTION("number (floating-point)")
+        {
+            json j(42.23);
+            CHECK(not j.is_null());
+            CHECK(not j.is_boolean());
+            CHECK(j.is_number());
+            CHECK(not j.is_object());
+            CHECK(not j.is_array());
+            CHECK(not j.is_string());
+        }
+    }
+
     SECTION("serialization")
     {
         json j {{"object", json::object()}, {"array", {1, 2, 3, 4}}, {"number", 42}, {"boolean", false}, {"null", nullptr}, {"string", "Hello world"} };

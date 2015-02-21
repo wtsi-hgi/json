@@ -502,6 +502,7 @@ class basic_json
         return basic_json(l, false, value_t::object);
     }
 
+
     ///////////////////////////////////////
     // other constructors and destructor //
     ///////////////////////////////////////
@@ -653,6 +654,42 @@ class basic_json
     inline value_t type() const noexcept
     {
         return m_type;
+    }
+
+    // return whether value is null
+    inline bool is_null() const noexcept
+    {
+        return m_type == value_t::null;
+    }
+
+    // return whether value is boolean
+    inline bool is_boolean() const noexcept
+    {
+        return m_type == value_t::boolean;
+    }
+
+    // return whether value is number
+    inline bool is_number() const noexcept
+    {
+        return (m_type == value_t::number_integer) or (m_type == value_t::number_float);
+    }
+
+    // return whether value is object
+    inline bool is_object() const noexcept
+    {
+        return m_type == value_t::object;
+    }
+
+    // return whether value is array
+    inline bool is_array() const noexcept
+    {
+        return m_type == value_t::array;
+    }
+
+    // return whether value is string
+    inline bool is_string() const noexcept
+    {
+        return m_type == value_t::string;
     }
 
     /// return the type of the object (implicit)
