@@ -3501,7 +3501,7 @@ TEST_CASE("iterators")
         }
     }
 
-    SECTION("random access iterator")
+    SECTION("iteratror comparisons")
     {
         json j_values = {nullptr, true, 42, 23.23, {{"one", 1}, {"two", 2}}, {1, 2, 3, 4, 5}, "Hello, world"};
 
@@ -3520,35 +3520,66 @@ TEST_CASE("iterators")
             ++it3_c;
             ++it3_c;
 
-            SECTION("comparison: smaller")
+            // comparison: equal
+            {
+                CHECK(it1 == it1);
+                CHECK(not (it1 == it2));
+                CHECK(not (it1 == it3));
+                CHECK(not (it2 == it3));
+                CHECK(it1_c == it1_c);
+                CHECK(not (it1_c == it2_c));
+                CHECK(not (it1_c == it3_c));
+                CHECK(not (it2_c == it3_c));
+            }
+
+            // comparison: not equal
+            {
+                // check definition
+                CHECK( (it1 != it1) == not(it1 == it1) );
+                CHECK( (it1 != it2) == not(it1 == it2) );
+                CHECK( (it1 != it3) == not(it1 == it3) );
+                CHECK( (it2 != it3) == not(it2 == it3) );
+                CHECK( (it1_c != it1_c) == not(it1_c == it1_c) );
+                CHECK( (it1_c != it2_c) == not(it1_c == it2_c) );
+                CHECK( (it1_c != it3_c) == not(it1_c == it3_c) );
+                CHECK( (it2_c != it3_c) == not(it2_c == it3_c) );
+            }
+
+            // comparison: smaller
             {
                 if (j.type() == json::value_t::object)
                 {
+                    CHECK_THROWS_AS(it1 < it1, std::domain_error);
                     CHECK_THROWS_AS(it1 < it2, std::domain_error);
                     CHECK_THROWS_AS(it2 < it3, std::domain_error);
                     CHECK_THROWS_AS(it1 < it3, std::domain_error);
+                    CHECK_THROWS_AS(it1_c < it1_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c < it2_c, std::domain_error);
                     CHECK_THROWS_AS(it2_c < it3_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c < it3_c, std::domain_error);
                 }
                 else
                 {
+                    CHECK(not (it1 < it1));
                     CHECK(it1 < it2);
                     CHECK(it1 < it3);
                     CHECK(it2 < it3);
+                    CHECK(not (it1_c < it1_c));
                     CHECK(it1_c < it2_c);
                     CHECK(it1_c < it3_c);
                     CHECK(it2_c < it3_c);
                 }
             }
 
-            SECTION("comparison: less than or equal")
+            // comparison: less than or equal
             {
                 if (j.type() == json::value_t::object)
                 {
+                    CHECK_THROWS_AS(it1 <= it1, std::domain_error);
                     CHECK_THROWS_AS(it1 <= it2, std::domain_error);
                     CHECK_THROWS_AS(it2 <= it3, std::domain_error);
                     CHECK_THROWS_AS(it1 <= it3, std::domain_error);
+                    CHECK_THROWS_AS(it1_c <= it1_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c <= it2_c, std::domain_error);
                     CHECK_THROWS_AS(it2_c <= it3_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c <= it3_c, std::domain_error);
@@ -3556,22 +3587,26 @@ TEST_CASE("iterators")
                 else
                 {
                     // check definition
+                    CHECK( (it1 <= it1) == not(it1 < it1) );
                     CHECK( (it1 <= it2) == not(it2 < it1) );
                     CHECK( (it1 <= it3) == not(it3 < it1) );
                     CHECK( (it2 <= it3) == not(it3 < it2) );
+                    CHECK( (it1_c <= it1_c) == not(it1_c < it1_c) );
                     CHECK( (it1_c <= it2_c) == not(it2_c < it1_c) );
                     CHECK( (it1_c <= it3_c) == not(it3_c < it1_c) );
                     CHECK( (it2_c <= it3_c) == not(it3_c < it2_c) );
                 }
             }
 
-            SECTION("comparison: greater than")
+            // comparison: greater than
             {
                 if (j.type() == json::value_t::object)
                 {
+                    CHECK_THROWS_AS(it1 > it1, std::domain_error);
                     CHECK_THROWS_AS(it1 > it2, std::domain_error);
                     CHECK_THROWS_AS(it2 > it3, std::domain_error);
                     CHECK_THROWS_AS(it1 > it3, std::domain_error);
+                    CHECK_THROWS_AS(it1_c > it1_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c > it2_c, std::domain_error);
                     CHECK_THROWS_AS(it2_c > it3_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c > it3_c, std::domain_error);
@@ -3579,22 +3614,26 @@ TEST_CASE("iterators")
                 else
                 {
                     // check definition
+                    CHECK( (it1 > it1) == (it1 < it1) );
                     CHECK( (it1 > it2) == (it2 < it1) );
                     CHECK( (it1 > it3) == (it3 < it1) );
                     CHECK( (it2 > it3) == (it3 < it2) );
+                    CHECK( (it1_c > it1_c) == (it1_c < it1_c) );
                     CHECK( (it1_c > it2_c) == (it2_c < it1_c) );
                     CHECK( (it1_c > it3_c) == (it3_c < it1_c) );
                     CHECK( (it2_c > it3_c) == (it3_c < it2_c) );
                 }
             }
 
-            SECTION("comparison: greater than or equal")
+            // comparison: greater than or equal
             {
                 if (j.type() == json::value_t::object)
                 {
+                    CHECK_THROWS_AS(it1 >= it1, std::domain_error);
                     CHECK_THROWS_AS(it1 >= it2, std::domain_error);
                     CHECK_THROWS_AS(it2 >= it3, std::domain_error);
                     CHECK_THROWS_AS(it1 >= it3, std::domain_error);
+                    CHECK_THROWS_AS(it1_c >= it1_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c >= it2_c, std::domain_error);
                     CHECK_THROWS_AS(it2_c >= it3_c, std::domain_error);
                     CHECK_THROWS_AS(it1_c >= it3_c, std::domain_error);
@@ -3602,9 +3641,11 @@ TEST_CASE("iterators")
                 else
                 {
                     // check definition
+                    CHECK( (it1 >= it1) == not(it1 < it1) );
                     CHECK( (it1 >= it2) == not(it1 < it2) );
                     CHECK( (it1 >= it3) == not(it1 < it3) );
                     CHECK( (it2 >= it3) == not(it2 < it3) );
+                    CHECK( (it1_c >= it1_c) == not(it1_c < it1_c) );
                     CHECK( (it1_c >= it2_c) == not(it1_c < it2_c) );
                     CHECK( (it1_c >= it3_c) == not(it1_c < it3_c) );
                     CHECK( (it2_c >= it3_c) == not(it2_c < it3_c) );
@@ -4602,8 +4643,6 @@ TEST_CASE("lexicographical comparison operators")
             {
                 for (size_t j = 0; j < j_values.size(); ++j)
                 {
-                    CAPTURE(i);
-                    CAPTURE(j);
                     // check precomputed values
                     CHECK( (j_values[i] < j_values[j]) == expected[i][j] );
                 }
