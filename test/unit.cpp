@@ -6519,37 +6519,37 @@ TEST_CASE("algorithms")
     {
         SECTION("std::all_of")
         {
-            CHECK(std::all_of(j_array.begin(), j_array.end(), [](const json & element)
+            CHECK(std::all_of(j_array.begin(), j_array.end(), [](const json & value)
             {
-                return element.size() > 0;
+                return value.size() > 0;
             }));
-            CHECK(std::all_of(j_object.begin(), j_object.end(), [](const json & element)
+            CHECK(std::all_of(j_object.begin(), j_object.end(), [](const json & value)
             {
-                return element.type() == json::value_t::number_integer;
+                return value.type() == json::value_t::number_integer;
             }));
         }
 
         SECTION("std::any_of")
         {
-            CHECK(std::any_of(j_array.begin(), j_array.end(), [](const json & element)
+            CHECK(std::any_of(j_array.begin(), j_array.end(), [](const json & value)
             {
-                return element.type() == json::value_t::string and element.get<std::string>() == "foo";
+                return value.is_string() and value.get<std::string>() == "foo";
             }));
-            CHECK(std::any_of(j_object.begin(), j_object.end(), [](const json & element)
+            CHECK(std::any_of(j_object.begin(), j_object.end(), [](const json & value)
             {
-                return element.get<int>() > 1;
+                return value.get<int>() > 1;
             }));
         }
 
         SECTION("std::none_of")
         {
-            CHECK(std::none_of(j_array.begin(), j_array.end(), [](const json & element)
+            CHECK(std::none_of(j_array.begin(), j_array.end(), [](const json & value)
             {
-                return element.size() == 0;
+                return value.size() == 0;
             }));
-            CHECK(std::none_of(j_object.begin(), j_object.end(), [](const json & element)
+            CHECK(std::none_of(j_object.begin(), j_object.end(), [](const json & value)
             {
-                return element.get<int>() <= 0;
+                return value.get<int>() <= 0;
             }));
         }
 
@@ -6561,7 +6561,7 @@ TEST_CASE("algorithms")
 
                 std::for_each(j_array.cbegin(), j_array.cend(), [&sum](const json & value)
                 {
-                    if (value.type() == json::value_t::number_integer)
+                    if (value.is_number())
                     {
                         sum += static_cast<int>(value);
                     }
@@ -6574,7 +6574,7 @@ TEST_CASE("algorithms")
             {
                 auto add17 = [](json & value)
                 {
-                    if (value.type() == json::value_t::array)
+                    if (value.is_array())
                     {
                         value.push_back(17);
                     }
@@ -6595,7 +6595,7 @@ TEST_CASE("algorithms")
         {
             CHECK(std::count_if(j_array.begin(), j_array.end(), [](const json & value)
             {
-                return (value.type() == json::value_t::number_integer);
+                return (value.is_number());
             }) == 3);
             CHECK(std::count_if(j_array.begin(), j_array.end(), [](const json&)
             {
@@ -6647,5 +6647,53 @@ TEST_CASE("algorithms")
             std::partial_sort(j.begin(), j.begin() + 4, j.end());
             CHECK(j == json({nullptr, false, true, 3, {{"one", 1}, {"two", 2}}, 29, {1, 2, 3}, "foo", "baz", 13}));
         }
+    }
+}
+
+TEST_CASE("recursive_iterator")
+{
+    json j1 = {{{1, 2}, 3}, 4, {5, 6, 7}, 8};
+    json j2 = {13, 29, 3, {{"one", 1}, {"two", 2}}, true, false, {1, 2, 3}, "foo", "baz"};
+
+    auto simple_counter = [](const json&)
+    {
+        return true;
+    };
+
+    SECTION("std::count_if")
+    {
+        {
+            CHECK(std::count_if(j1.begin(), j1.end(), simple_counter) == 4);
+            CHECK(std::count_if(j1.recbegin(), j1.recend(), simple_counter) == 8);
+        }
+
+        {
+            CHECK(std::count_if(j2.begin(), j2.end(), simple_counter) == 9);
+            CHECK(std::count_if(j2.recbegin(), j2.recend(), simple_counter) == 12);
+
+            CHECK(std::count_if(j2.recbegin(), j2.recend(), [](const json & value)
+            {
+                return value.is_number();
+            }) == 8);
+        }
+    }
+
+    SECTION("std::for_each")
+    {
+        std::for_each(j1.recbegin(), j1.recend(), [](json & value)
+        {
+            if (value.is_number())
+            {
+                value = static_cast<int>(value) + 1;
+            }
+        });
+        CHECK(j1 == json({{{2, 3}, 4}, 5, {6, 7, 8}, 9}));
+    }
+
+    SECTION("std::includes")
+    {
+        json needle = {4, 5, 7};
+        CHECK(not std::includes(j1.begin(), j1.end(), needle.begin(), needle.end()));
+        CHECK(std::includes(j1.recbegin(), j1.recend(), needle.begin(), needle.end()));
     }
 }

@@ -74,6 +74,7 @@ class basic_json
     // forward declarations
     class iterator;
     class const_iterator;
+    class recursive_iterator;
 
     /// the type of elements in a basic_json container
     using value_type = basic_json;
@@ -97,6 +98,8 @@ class basic_json
     using reverse_iterator = std::reverse_iterator<iterator>;
     /// a const reverse iterator for a basic_json container
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    /// a recursive iterator for a basic_json container
+    using recursive_iterator = basic_json::recursive_iterator;
 
 
     ///////////////////////////
@@ -1068,6 +1071,22 @@ class basic_json
     inline const_reverse_iterator crend() const noexcept
     {
         return const_reverse_iterator(cbegin());
+    }
+
+    /// returns a recursive iterator to the beginning
+    inline recursive_iterator recbegin() noexcept
+    {
+        recursive_iterator result(this);
+        result.set_begin();
+        return result;
+    }
+
+    /// returns a recursive iterator to the end
+    inline recursive_iterator recend() noexcept
+    {
+        recursive_iterator result(this);
+        result.set_end();
+        return result;
     }
 
 
@@ -2850,6 +2869,460 @@ class basic_json
         pointer m_object = nullptr;
         /// the actual iterator of the associated instance
         internal_iterator<typename array_t::const_iterator, typename object_t::const_iterator> m_it;
+    };
+
+    /// a recursive iterator for the basic_json class
+    class recursive_iterator : public std::iterator<std::forward_iterator_tag, basic_json>
+    {
+      public:
+        /// the type of the values when the iterator is dereferenced
+        using value_type = basic_json::value_type;
+        /// a type to represent differences between iterators
+        using difference_type = basic_json::difference_type;
+        /// defines a pointer to the type iterated over (value_type)
+        using pointer = basic_json::pointer;
+        /// defines a reference to the type iterated over (value_type)
+        using reference = basic_json::reference;
+        /// the category of the iterator
+        using iterator_category = std::forward_iterator_tag;
+
+        /// default constructor
+        inline recursive_iterator() = default;
+
+        /// constructor for a given JSON instance
+        inline recursive_iterator(pointer object) : m_object(object)
+        {
+            switch (m_object->m_type)
+            {
+                case (basic_json::value_t::object):
+                {
+                    m_it.object_iterator = typename object_t::iterator();
+                    break;
+                }
+                case (basic_json::value_t::array):
+                {
+                    m_it.array_iterator = typename array_t::iterator();
+                    break;
+                }
+                default:
+                {
+                    m_it.generic_iterator = -1;
+                    break;
+                }
+            }
+        }
+
+        /// copy assignment
+        inline recursive_iterator& operator=(const recursive_iterator& other) noexcept
+        {
+            m_object = other.m_object;
+            m_it = other.m_it;
+            return *this;
+        }
+
+        /// set the iterator to the first value
+        inline void set_begin() noexcept
+        {
+            switch (m_object->m_type)
+            {
+                case (basic_json::value_t::object):
+                {
+                    m_it.object_iterator = m_object->m_value.object->begin();
+                    break;
+                }
+
+                case (basic_json::value_t::array):
+                {
+                    m_it.array_iterator = m_object->m_value.array->begin();
+                    break;
+                }
+
+                case (basic_json::value_t::null):
+                {
+                    // set to end so begin()==end() is true: null is empty
+                    m_it.generic_iterator = 1;
+                    break;
+                }
+
+                default:
+                {
+                    m_it.generic_iterator = 0;
+                    break;
+                }
+            }
+
+            if (m_stack.empty())
+            {
+                m_stack = build_stack();
+            }
+        }
+
+        /// set the iterator past the last value
+        inline void set_end() noexcept
+        {
+            switch (m_object->m_type)
+            {
+                case (basic_json::value_t::object):
+                {
+                    m_it.object_iterator = m_object->m_value.object->end();
+                    break;
+                }
+
+                case (basic_json::value_t::array):
+                {
+                    m_it.array_iterator = m_object->m_value.array->end();
+                    break;
+                }
+
+                default:
+                {
+                    m_it.generic_iterator = 1;
+                    break;
+                }
+            }
+        }
+
+        /// return a reference to the value pointed to by the iterator
+        inline reference operator*() const
+        {
+            return *(m_stack.back());
+        }
+
+        /// dereference the iterator
+        inline pointer operator->() const
+        {
+            return &(*(m_stack.back()));
+        }
+
+        /// post-increment (it++)
+        inline recursive_iterator operator++(int)
+        {
+            // save current iterator
+            auto result = *this;
+            // increment
+            operator++();
+            // return saved iterator
+            return result;
+        }
+
+        /// pre-increment (++it)
+        inline recursive_iterator& operator++()
+        {
+            while (not m_stack.empty())
+            {
+                // increment last iterator
+                auto it = ++m_stack.back();
+
+                if (it != it.m_object->end())
+                {
+                    // if iterator is at not at the end, create a new stack
+                    auto s = m_stack.back()->recbegin().build_stack();
+                    m_stack.insert(m_stack.end(), s.begin(), s.end());
+                    break;
+                }
+                else
+                {
+                    // if iterator is at the end, remove it
+                    m_stack.pop_back();
+                }
+            }
+
+            if (m_stack.empty())
+            {
+                set_end();
+            }
+
+            return *this;
+        }
+
+        /*
+        /// post-decrement (it--)
+        inline recursive_iterator operator--(int)
+        {
+            auto result = *this;
+
+            switch (m_object->m_type)
+            {
+                case (basic_json::value_t::object):
+                {
+                    m_it.object_iterator--;
+                    break;
+                }
+
+                case (basic_json::value_t::array):
+                {
+                    m_it.array_iterator--;
+                    break;
+                }
+
+                default:
+                {
+                    m_it.generic_iterator--;
+                    break;
+                }
+            }
+
+            return result;
+        }
+
+        /// pre-decrement (--it)
+        inline recursive_iterator& operator--()
+        {
+            switch (m_object->m_type)
+            {
+                case (basic_json::value_t::object):
+                {
+                    --m_it.object_iterator;
+                    break;
+                }
+
+                case (basic_json::value_t::array):
+                {
+                    --m_it.array_iterator;
+                    break;
+                }
+
+                default:
+                {
+                    --m_it.generic_iterator;
+                    break;
+                }
+            }
+
+            return *this;
+        }
+        */
+
+        /// comparison: equal
+        inline bool operator==(const recursive_iterator& other) const
+        {
+            // if objects are not the same, the comparison is undefined
+            if (m_object != other.m_object)
+            {
+                throw std::domain_error("cannot compare iterators of different containers");
+            }
+
+            switch (m_object->m_type)
+            {
+                case (basic_json::value_t::object):
+                {
+                    return (m_it.object_iterator == other.m_it.object_iterator);
+                }
+
+                case (basic_json::value_t::array):
+                {
+                    return (m_it.array_iterator == other.m_it.array_iterator);
+                }
+
+                default:
+                {
+                    return (m_it.generic_iterator == other.m_it.generic_iterator);
+                }
+            }
+        }
+
+        /// comparison: not equal
+        inline bool operator!=(const recursive_iterator& other) const
+        {
+            return not operator==(other);
+        }
+
+        /*
+        /// comparison: smaller
+        inline bool operator<(const recursive_iterator& other) const
+        {
+            // if objects are not the same, the comparison is undefined
+            if (m_object != other.m_object)
+            {
+                throw std::domain_error("cannot compare iterators of different containers");
+            }
+
+            switch (m_object->m_type)
+            {
+                case (basic_json::value_t::object):
+                {
+                    throw std::domain_error("cannot use operator< for object iterators");
+                }
+
+                case (basic_json::value_t::array):
+                {
+                    return (m_it.array_iterator < other.m_it.array_iterator);
+                }
+
+                default:
+                {
+                    return (m_it.generic_iterator < other.m_it.generic_iterator);
+                }
+            }
+        }
+
+        /// comparison: less than or equal
+        inline bool operator<=(const recursive_iterator& other) const
+        {
+            return not other.operator < (*this);
+        }
+
+        /// comparison: greater than
+        inline bool operator>(const recursive_iterator& other) const
+        {
+            return not operator<=(other);
+        }
+
+        /// comparison: greater than or equal
+        inline bool operator>=(const recursive_iterator& other) const
+        {
+            return not operator<(other);
+        }
+
+        /// add to iterator
+        inline recursive_iterator& operator+=(difference_type i)
+        {
+            switch (m_object->m_type)
+            {
+                case (basic_json::value_t::object):
+                {
+                    throw std::domain_error("cannot use operator+= for object iterators");
+                }
+
+                case (basic_json::value_t::array):
+                {
+                    m_it.array_iterator += i;
+                    break;
+                }
+
+                default:
+                {
+                    m_it.generic_iterator += i;
+                    break;
+                }
+            }
+
+            return *this;
+        }
+
+        /// subtract from iterator
+        inline recursive_iterator& operator-=(difference_type i)
+        {
+            return operator+=(-i);
+        }
+
+        /// add to iterator
+        inline recursive_iterator operator+(difference_type i)
+        {
+            auto result = *this;
+            result += i;
+            return result;
+        }
+
+        /// subtract from iterator
+        inline recursive_iterator operator-(difference_type i)
+        {
+            auto result = *this;
+            result -= i;
+            return result;
+        }
+
+        /// return difference
+        inline difference_type operator-(const recursive_iterator& other) const
+        {
+            switch (m_object->m_type)
+            {
+                case (basic_json::value_t::object):
+                {
+                    throw std::domain_error("cannot use operator- for object iterators");
+                    return 0;
+                }
+
+                case (basic_json::value_t::array):
+                {
+                    return m_it.array_iterator - other.m_it.array_iterator;
+                }
+
+                default:
+                {
+                    return m_it.generic_iterator - other.m_it.generic_iterator;
+                }
+            }
+        }
+
+        /// access to successor
+        inline reference operator[](difference_type n) const
+        {
+            switch (m_object->m_type)
+            {
+                case (basic_json::value_t::object):
+                {
+                    throw std::domain_error("cannot use operator[] for object iterators");
+                }
+
+                case (basic_json::value_t::array):
+                {
+                    return *(m_it.array_iterator + n);
+                }
+
+                case (basic_json::value_t::null):
+                {
+                    throw std::out_of_range("cannot get value");
+                }
+
+                default:
+                {
+                    if (m_it.generic_iterator == -n)
+                    {
+                        return *m_object;
+                    }
+                    else
+                    {
+                        throw std::out_of_range("cannot get value");
+                    }
+                }
+            }
+        }
+        */
+
+        inline std::vector<basic_json::iterator> build_stack()
+        {
+            if (not m_stack.empty())
+            {
+                return m_stack;
+            }
+
+            // add current iterator to stack
+            m_stack.push_back(m_object->begin());
+
+            // recursive traversal for containers
+            switch (m_object->m_type)
+            {
+                case (basic_json::value_t::object):
+                {
+                    auto s = (m_object->m_value.object->begin())->second.recbegin().build_stack();
+                    m_stack.insert(m_stack.end(), s.begin(), s.end());
+                    break;
+                }
+
+                case (basic_json::value_t::array):
+                {
+                    auto s = m_object->m_value.array->begin()->recbegin().build_stack();
+                    m_stack.insert(m_stack.end(), s.begin(), s.end());
+                    break;
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+
+            return m_stack;
+        }
+
+      private:
+        /// associated JSON instance
+        pointer m_object = nullptr;
+        /// the actual iterator of the associated instance
+        internal_iterator<typename array_t::iterator, typename object_t::iterator> m_it;
+        /// the stack for the recursion
+        std::vector<basic_json::iterator> m_stack;
     };
 
 
