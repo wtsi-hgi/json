@@ -18,7 +18,6 @@ using nlohmann::json;
 #include <forward_list>
 #include <list>
 #include <map>
-#include <numeric>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -6993,25 +6992,10 @@ TEST_CASE("algorithms")
 
     SECTION("heap operations")
     {
-        SECTION("std::make_heap")
-        {
-            std::make_heap(j_array.begin(), j_array.end());
-            CHECK(j_array == json({"foo", "baz", {{"one", 1}, {"two", 2}}, {1, 2, 3}, true, false, 3, 13, 29}));
-        }
-
-        SECTION("std::sort_heap")
-        {
-            json j_heap = {"foo", "baz", {{"one", 1}, {"two", 2}}, {1, 2, 3}, true, false, 3, 13, 29};
-            std::sort_heap(j_heap.begin(), j_heap.end());
-            CHECK(j_heap == json({false, true, 3, 13, 29, {{"one", 1}, {"two", 2}}, {1, 2, 3}, "baz", "foo"}));
-        }
-
-        SECTION("std::is_heap")
-        {
-            json j_heap = {"foo", "baz", {{"one", 1}, {"two", 2}}, {1, 2, 3}, true, false, 3, 13, 29};
-            CHECK(std::is_heap(j_heap.begin(), j_heap.end()));
-            CHECK(not std::is_heap(j_array.begin(), j_array.end()));
-        }
+        std::make_heap(j_array.begin(), j_array.end());
+        CHECK(std::is_heap(j_array.begin(), j_array.end()));
+        std::sort_heap(j_array.begin(), j_array.end());
+        CHECK(j_array == json({false, true, 3, 13, 29, {{"one", 1}, {"two", 2}}, {1, 2, 3}, "baz", "foo"}));
     }
 }
 
